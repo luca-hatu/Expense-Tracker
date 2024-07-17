@@ -7,38 +7,32 @@ body {
     height: 100vh;
     margin: 0;
 }
-
 .container {
     background-color: #fff;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    width: 300px;
+    width: 500px;
     text-align: center;
 }
-
 h1 {
     margin-bottom: 20px;
 }
-
 .form-group {
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
-
 input[type="text"],
 input[type="number"] {
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
 }
-
 .category-buttons {
     display: flex;
     justify-content: space-around;
 }
-
 .category-button {
     padding: 10px;
     background-color: #f0f0f0;
@@ -46,45 +40,58 @@ input[type="number"] {
     border-radius: 4px;
     cursor: pointer;
 }
-
 .category-button.active {
-    background-color: #28a78c;
+    background-color: #28a745;
     color: #fff;
 }
-
 button {
     padding: 10px;
-    background-color: #28a78c;
+    background-color: #1dc2c5;
     color: #fff;
     border: none;
     border-radius: 4px;
     cursor: pointer;
 }
-
 button:hover {
-    background-color: #1e7c68;
+    background-color: #168f91;
 }
-
 .expenses-list {
     margin-top: 20px;
     text-align: left;
 }
-
 .expense-item {
     border: 1px solid #ccc;
     border-radius: 4px;
     background-color: rgba(0, 123, 255, 0.1);
     padding: 10px;
     margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
-
-.expense-item span.category {
+.expense-item .left {
+    display: flex;
+    align-items: center;
+    gap: 10px; 
+}
+.expense-item .amount {
+    margin-left: 10px;
     font-weight: bold;
-    margin-right: 10px;
 }
-
 .total {
     margin-top: 20px;
     font-weight: bold;
 }
-
+.action-buttons {
+    display: flex;
+    gap: 5px;
+}
+.action-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+.total {
+    margin-top: 20px;
+    font-weight: bold;
+}
