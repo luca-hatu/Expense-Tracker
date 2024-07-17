@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Tracker</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 </head>
 <body>
     <div class="container">
@@ -12,6 +13,13 @@
         <div class="form-group">
             <input type="text" id="description" placeholder="Expense Description">
             <input type="number" id="amount" placeholder="Amount">
+            <div class="category-buttons">
+                <button onclick="setCategory('Food')" id="Food" class="category-button"><span class="material-icons">restaurant</span></button>
+                <button onclick="setCategory('Transport')" id="Transport" class="category-button"><span class="material-icons">directions_car</span></button>
+                <button onclick="setCategory('Entertainment')" id="Entertainment" class="category-button"><span class="material-icons">movie</span></button>
+                <button onclick="setCategory('Utilities')" id="Utilities" class="category-button"><span class="material-icons">bolt</span></button>
+                <button onclick="setCategory('Other')" id="Other" class="category-button"><span class="material-icons">label</span></button>
+            </div>
             <button onclick="addExpense()">Add Expense</button>
         </div>
         <div class="expenses-list" id="expenses-list"></div>
@@ -20,3 +28,5 @@
     <script src="script.js"></script>
 </body>
 </html>
+
+
