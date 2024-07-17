@@ -8,8 +8,33 @@ document.addEventListener('DOMContentLoaded', () => {
         'Utilities': 0,
         'Other': 0
     };
-    
+    let conversionRates = {};
+    let selectedCurrency = 'USD';
+    const currencySymbols = {
+        'USD': '$',
+        'EUR': '€',
+        'GBP': '£',
+        'JPY': '¥',
+        'INR': '₹'
+    };
+
+    const API_KEY = '7d91d66b1af43e385e105788'; 
+    const API_URL = `https://v6.exchangerate-api.com/v6/${API_KEY}/latest/USD`;
+
     flatpickr("#date", { dateFormat: "d/m/Y" });
+
+    async function fetchConversionRates() {
+        try {
+            const response = await fetch(API_URL);
+            const data = await response.json();
+            conversionRates = data.conversion_rates;
+            console.log('Conversion rates:', conversionRates);
+        } catch (error) {
+            console.error('Error fetching conversion rates:', error);
+        }
+    }
+
+    fetchConversionRates();
 
     const ctx = document.getElementById('category-chart').getContext('2d');
     const categoryChart = new Chart(ctx, {
@@ -36,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tooltip: {
                     callbacks: {
                         label: function(tooltipItem) {
-                            return `${tooltipItem.label}: $${tooltipItem.raw.toFixed(2)}`;
+                            return `${tooltipItem.label}: ${currencySymbols[selectedCurrency]}${tooltipItem.raw.toFixed(2)}`;
                         }
                     }
                 }
@@ -79,10 +104,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const categoryTotals = {};
 
         expenses.forEach((expense, index) => {
+            const convertedAmount = convertCurrency(expense.amount, 'USD', selectedCurrency);
             const expenseElement = document.createElement('div');
             expenseElement.className = 'expense-item';
             const categoryIcon = getCategoryIcon(expense.category);
-            const limitExceeded = (categoryTotals[expense.category] || 0) + expense.amount > limits[expense.category];
+            const limitExceeded = (categoryTotals[expense.category] || 0) + convertedAmount > limits[expense.category];
             expenseElement.innerHTML = `
                 <div class="left">
                     ${categoryIcon}
@@ -91,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 <div class="amount">
-                    $${expense.amount.toFixed(2)}
+                    ${currencySymbols[selectedCurrency]}${convertedAmount.toFixed(2)}
                 </div>
                 <div class="action-buttons">
                     <button class="action-button edit-button" data-index="${index}"><span class="material-icons">edit</span></button>
@@ -99,16 +125,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 ${limitExceeded ? '<div class="limit-warning">Limit exceeded!</div>' : ''}`;
             expensesList.appendChild(expenseElement);
-            total += expense.amount;
-
+            total += convertedAmount;
             if (categoryTotals[expense.category]) {
-                categoryTotals[expense.category] += expense.amount;
+                categoryTotals[expense.category] += convertedAmount;
             } else {
-                categoryTotals[expense.category] = expense.amount;
+                categoryTotals[expense.category] = convertedAmount;
             }
         });
 
-        totalElement.textContent = `Total expenses: $${total.toFixed(2)}`;
+        totalElement.textContent = `Total expenses: ${currencySymbols[selectedCurrency]}${total.toFixed(2)} (${selectedCurrency})`;
 
         updateChart(categoryTotals);
         attachButtonEventListeners(); 
@@ -132,6 +157,14 @@ document.addEventListener('DOMContentLoaded', () => {
             'Other': '<span class="material-icons">label</span>'
         };
         return icons[category] || '<span class="material-icons">label</span>';
+    }
+
+    function convertCurrency(amount, fromCurrency, toCurrency) {
+        if (fromCurrency === toCurrency) {
+            return amount;
+        }
+        const rate = conversionRates[toCurrency] || 1;
+        return amount * rate;
     }
 
     function editExpense(index) {
@@ -183,6 +216,11 @@ document.addEventListener('DOMContentLoaded', () => {
         updateExpenses();
     }
 
+    function setCurrency(currency) {
+        selectedCurrency = currency;
+        updateExpenses();
+    }
+
     document.getElementById('add-expense').addEventListener('click', addExpense);
 
     document.querySelectorAll('.category-button').forEach(button => {
@@ -192,5 +230,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.limit-inputs input').forEach(input => {
         input.addEventListener('change', setLimits);
     });
+
+    document.getElementById('currency-select').addEventListener('change', (event) => {
+        setCurrency(event.target.value);
+    });
 });
+
 

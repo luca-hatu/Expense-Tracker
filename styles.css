@@ -40,7 +40,7 @@ input[type="number"] {
     cursor: pointer;
 }
 .category-button.active {
-    background-color: #28a745;
+    background-color: #168f91;
     color: #fff;
 }
 button {
@@ -120,4 +120,15 @@ input[type="number"] {
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
+}
+.currency-group {
+    margin-top: 20px;
+    text-align: left;
+}
+.currency-group select {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
 }

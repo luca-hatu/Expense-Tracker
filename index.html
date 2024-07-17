@@ -25,6 +25,9 @@
             </div>
             <button id="add-expense">Add Expense</button>
         </div>
+        <div class="expenses-list" id="expenses-list"></div>
+        <div class="total" id="total"></div>
+        <canvas id="category-chart" width="400" height="200"></canvas>
         <div class="limit-group">
             <h3>Set Expense Limits</h3>
             <div class="limit-inputs">
@@ -50,9 +53,16 @@
                 </div>
             </div>
         </div>
-        <div class="expenses-list" id="expenses-list"></div>
-        <div class="total" id="total"></div>
-        <canvas id="category-chart" width="400" height="200"></canvas>
+        <div class="currency-group">
+            <h3>Select Currency</h3>
+            <select id="currency-select">
+                <option value="USD">USD - US Dollar</option>
+                <option value="EUR">EUR - Euro</option>
+                <option value="GBP">GBP - British Pound</option>
+                <option value="JPY">JPY - Japanese Yen</option>
+                <option value="INR">INR - Indian Rupee</option>
+            </select>
+        </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="script.js"></script>
