@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'INR': '₹'
     };
 
-    const API_KEY = '7d91d66b1af43e385e105788'; 
+    const API_KEY = '7d91d66b1af43e385e105788'
     const API_URL = `https://v6.exchangerate-api.com/v6/${API_KEY}/latest/USD`;
 
     flatpickr("#date", { dateFormat: "d/m/Y" });
@@ -83,13 +83,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const description = document.getElementById('description').value;
         const amount = parseFloat(document.getElementById('amount').value);
         const date = document.getElementById('date').value;
+        const isRecurring = document.getElementById('recurring').checked;
+        const interval = document.getElementById('recurring-interval').value;
 
         if (description === '' || isNaN(amount) || selectedCategory === null || date === '') {
             alert('Please enter a valid description, amount, date, and select a category.');
             return;
         }
 
-        expenses.push({ description, amount, category: selectedCategory, date });
+        const expense = { description, amount, category: selectedCategory, date, isRecurring, interval };
+        expenses.push(expense);
         updateExpenses();
         resetForm();
     }
@@ -104,59 +107,86 @@ document.addEventListener('DOMContentLoaded', () => {
         const categoryTotals = {};
 
         expenses.forEach((expense, index) => {
-            const convertedAmount = convertCurrency(expense.amount, 'USD', selectedCurrency);
-            const expenseElement = document.createElement('div');
-            expenseElement.className = 'expense-item';
-            const categoryIcon = getCategoryIcon(expense.category);
-            const limitExceeded = (categoryTotals[expense.category] || 0) + convertedAmount > limits[expense.category];
-            expenseElement.innerHTML = `
-                <div class="left">
-                    ${categoryIcon}
-                    <div>
-                        ${expense.description} on ${expense.date}
+            const futureExpenses = expense.isRecurring ? calculateRecurringExpenses(expense) : [expense];
+            futureExpenses.forEach(fe => {
+                const convertedAmount = convertCurrency(fe.amount, 'USD', selectedCurrency);
+                const expenseElement = document.createElement('div');
+                expenseElement.className = 'expense-item';
+                const categoryIcon = getCategoryIcon(fe.category);
+                const limitExceeded = (categoryTotals[fe.category] || 0) + convertedAmount > limits[fe.category];
+                expenseElement.innerHTML = `
+                    <div class="left">
+                        ${categoryIcon}
+                        <div>
+                            ${fe.description} on ${fe.date}
+                        </div>
                     </div>
-                </div>
-                <div class="amount">
-                    ${currencySymbols[selectedCurrency]}${convertedAmount.toFixed(2)}
-                </div>
-                <div class="action-buttons">
-                    <button class="action-button edit-button" data-index="${index}"><span class="material-icons">edit</span></button>
-                    <button class="action-button delete-button" data-index="${index}"><span class="material-icons">delete</span></button>
-                </div>
-                ${limitExceeded ? '<div class="limit-warning">Limit exceeded!</div>' : ''}`;
-            expensesList.appendChild(expenseElement);
-            total += convertedAmount;
-            if (categoryTotals[expense.category]) {
-                categoryTotals[expense.category] += convertedAmount;
-            } else {
-                categoryTotals[expense.category] = convertedAmount;
-            }
+                    <div class="amount">
+                        ${currencySymbols[selectedCurrency]}${convertedAmount.toFixed(2)}
+                    </div>
+                    <div class="action-buttons">
+                        <button class="action-button edit-button" data-index="${index}"><span class="fas fa-edit"></span></button>
+                        <button class="action-button delete-button" data-index="${index}"><span class="fas fa-trash"></span></button>
+                    </div>
+                    ${limitExceeded ? '<div class="limit-warning">Limit exceeded!</div>' : ''}`;
+                expensesList.appendChild(expenseElement);
+                total += convertedAmount;
+
+                if (categoryTotals[fe.category]) {
+                    categoryTotals[fe.category] += convertedAmount;
+                } else {
+                    categoryTotals[fe.category] = convertedAmount;
+                }
+            });
         });
 
         totalElement.textContent = `Total expenses: ${currencySymbols[selectedCurrency]}${total.toFixed(2)} (${selectedCurrency})`;
 
         updateChart(categoryTotals);
-        attachButtonEventListeners(); 
+        attachButtonEventListeners();
     }
 
-    function updateChart(categoryTotals) {
-        const labels = Object.keys(categoryTotals);
-        const data = Object.values(categoryTotals);
+    function calculateRecurringExpenses(expense) {
+        const futureExpenses = [];
+        const interval = expense.interval;
+        let nextDate = parseDate(expense.date);
 
-        categoryChart.data.labels = labels;
-        categoryChart.data.datasets[0].data = data;
-        categoryChart.update();
+        for (let i = 0; i < 12; i++) {
+            if (interval === 'daily') {
+                nextDate.setDate(nextDate.getDate() + 1);
+            } else if (interval === 'weekly') {
+                nextDate.setDate(nextDate.getDate() + 7);
+            } else if (interval === 'monthly') {
+                nextDate.setMonth(nextDate.getMonth() + 1);
+            } else if (interval === 'yearly') {
+                nextDate.setFullYear(nextDate.getFullYear() + 1);
+            }
+
+            const futureExpense = { ...expense, date: formatDate(nextDate) };
+            futureExpenses.push(futureExpense);
+        }
+
+        return futureExpenses;
+    }
+
+    function formatDate(date) {
+        return `${('0' + date.getDate()).slice(-2)}/${('0' + (date.getMonth() + 1)).slice(-2)}/${date.getFullYear()}`;
+    }
+
+    function parseDate(dateStr) {
+        const parts = dateStr.split('/');
+        return new Date(parts[2], parts[1] - 1, parts[0]);
     }
 
     function getCategoryIcon(category) {
         const icons = {
-            'Food': '<span class="material-icons">restaurant</span>',
-            'Transport': '<span class="material-icons">directions_car</span>',
-            'Entertainment': '<span class="material-icons">movie</span>',
-            'Utilities': '<span class="material-icons">bolt</span>',
-            'Other': '<span class="material-icons">label</span>'
+            'Food': '<i class="fas fa-utensils"></i>',
+            'Transport': '<i class="fas fa-car"></i>',
+            'Entertainment': '<i class="fas fa-film"></i>',
+            'Utilities': '<i class="fas fa-bolt"></i>',
+            'Other': '<i class="fas fa-ellipsis-h"></i>'
         };
-        return icons[category] || '<span class="material-icons">label</span>';
+        return icons[category] || '<i class="fas fa-ellipsis-h"></i>';
     }
 
     function convertCurrency(amount, fromCurrency, toCurrency) {
@@ -172,6 +202,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('description').value = expense.description;
         document.getElementById('amount').value = expense.amount;
         document.getElementById('date').value = expense.date;
+        document.getElementById('recurring').checked = expense.isRecurring;
+        document.getElementById('recurring-interval').value = expense.interval;
+        document.getElementById('recurring-interval').disabled = !expense.isRecurring;
         setCategory(expense.category);
         removeExpense(index);
     }
@@ -185,55 +218,48 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('description').value = '';
         document.getElementById('amount').value = '';
         document.getElementById('date').value = '';
+        document.getElementById('recurring').checked = false;
+        document.getElementById('recurring-interval').value = 'monthly';
+        document.getElementById('recurring-interval').disabled = true;
         selectedCategory = null;
+
         const buttons = document.querySelectorAll('.category-button');
         buttons.forEach(button => button.classList.remove('active'));
     }
 
     function attachButtonEventListeners() {
-        document.querySelectorAll('.edit-button').forEach(button => {
-            button.addEventListener('click', () => {
-                const index = button.getAttribute('data-index');
+        const editButtons = document.querySelectorAll('.edit-button');
+        editButtons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                const index = parseInt(event.target.closest('button').dataset.index);
                 editExpense(index);
             });
         });
 
-        document.querySelectorAll('.delete-button').forEach(button => {
-            button.addEventListener('click', () => {
-                const index = button.getAttribute('data-index');
+        const deleteButtons = document.querySelectorAll('.delete-button');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                const index = parseInt(event.target.closest('button').dataset.index);
                 removeExpense(index);
             });
         });
     }
 
-    function setLimits() {
-        limits['Food'] = parseFloat(document.getElementById('food-limit').value) || 0;
-        limits['Transport'] = parseFloat(document.getElementById('transport-limit').value) || 0;
-        limits['Entertainment'] = parseFloat(document.getElementById('entertainment-limit').value) || 0;
-        limits['Utilities'] = parseFloat(document.getElementById('utilities-limit').value) || 0;
-        limits['Other'] = parseFloat(document.getElementById('other-limit').value) || 0;
+    function updateChart(categoryTotals) {
+        const categories = Object.keys(categoryTotals);
+        const amounts = categories.map(category => categoryTotals[category]);
 
-        updateExpenses();
-    }
-
-    function setCurrency(currency) {
-        selectedCurrency = currency;
-        updateExpenses();
+        categoryChart.data.labels = categories;
+        categoryChart.data.datasets[0].data = amounts;
+        categoryChart.update();
     }
 
     document.getElementById('add-expense').addEventListener('click', addExpense);
 
-    document.querySelectorAll('.category-button').forEach(button => {
-        button.addEventListener('click', () => setCategory(button.dataset.category));
-    });
-
-    document.querySelectorAll('.limit-inputs input').forEach(input => {
-        input.addEventListener('change', setLimits);
-    });
-
-    document.getElementById('currency-select').addEventListener('change', (event) => {
-        setCurrency(event.target.value);
+    const categoryButtons = document.querySelectorAll('.category-button');
+    categoryButtons.forEach(button => {
+        button.addEventListener('click', (event) => {
+            setCategory(event.target.dataset.category);
+        });
     });
 });
-
-

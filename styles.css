@@ -132,3 +132,10 @@ input[type="number"] {
     width: 100%;
     box-sizing: border-box;
 }
+.form-group {
+    margin-bottom: 10px;
+}
+
+#recurring-interval {
+    margin-left: 10px;
+}

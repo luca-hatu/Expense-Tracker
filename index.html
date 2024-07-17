@@ -23,11 +23,21 @@
                 <button class="category-button" data-category="Utilities"><span class="material-icons">bolt</span> Utilities</button>
                 <button class="category-button" data-category="Other"><span class="material-icons">label</span> Other</button>
             </div>
+            <div class="form-group">
+                <label for="recurring">Recurring</label>
+                <input type="checkbox" id="recurring">
+                <select id="recurring-interval" disabled>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                </select>
+            </div>  
             <button id="add-expense">Add Expense</button>
         </div>
         <div class="expenses-list" id="expenses-list"></div>
         <div class="total" id="total"></div>
-        <canvas id="category-chart" width="400" height="200"></canvas>
+        <canvas id="category-chart" width="400" height="200"></canvas>     
         <div class="limit-group">
             <h3>Set Expense Limits</h3>
             <div class="limit-inputs">
