@@ -1,6 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
     let expenses = [];
     let selectedCategory = null;
+    const limits = {
+        'Food': 0,
+        'Transport': 0,
+        'Entertainment': 0,
+        'Utilities': 0,
+        'Other': 0
+    };
     
     flatpickr("#date", { dateFormat: "d/m/Y" });
 
@@ -74,9 +81,11 @@ document.addEventListener('DOMContentLoaded', () => {
         expenses.forEach((expense, index) => {
             const expenseElement = document.createElement('div');
             expenseElement.className = 'expense-item';
+            const categoryIcon = getCategoryIcon(expense.category);
+            const limitExceeded = (categoryTotals[expense.category] || 0) + expense.amount > limits[expense.category];
             expenseElement.innerHTML = `
                 <div class="left">
-                    ${getCategoryIcon(expense.category)}
+                    ${categoryIcon}
                     <div>
                         ${expense.description} on ${expense.date}
                     </div>
@@ -87,7 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="action-buttons">
                     <button class="action-button edit-button" data-index="${index}"><span class="material-icons">edit</span></button>
                     <button class="action-button delete-button" data-index="${index}"><span class="material-icons">delete</span></button>
-                </div>`;
+                </div>
+                ${limitExceeded ? '<div class="limit-warning">Limit exceeded!</div>' : ''}`;
             expensesList.appendChild(expenseElement);
             total += expense.amount;
 
@@ -163,9 +173,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function setLimits() {
+        limits['Food'] = parseFloat(document.getElementById('food-limit').value) || 0;
+        limits['Transport'] = parseFloat(document.getElementById('transport-limit').value) || 0;
+        limits['Entertainment'] = parseFloat(document.getElementById('entertainment-limit').value) || 0;
+        limits['Utilities'] = parseFloat(document.getElementById('utilities-limit').value) || 0;
+        limits['Other'] = parseFloat(document.getElementById('other-limit').value) || 0;
+
+        updateExpenses();
+    }
+
     document.getElementById('add-expense').addEventListener('click', addExpense);
 
     document.querySelectorAll('.category-button').forEach(button => {
         button.addEventListener('click', () => setCategory(button.dataset.category));
     });
+
+    document.querySelectorAll('.limit-inputs input').forEach(input => {
+        input.addEventListener('change', setLimits);
+    });
 });
+

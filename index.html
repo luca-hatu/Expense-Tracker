@@ -17,13 +17,38 @@
             <input type="number" id="amount" placeholder="Amount">
             <input type="text" id="date" placeholder="Select Date">
             <div class="category-buttons">
-                <button class="category-button" data-category="Food"><span class="material-icons">restaurant</span></button>
-                <button class="category-button" data-category="Transport"><span class="material-icons">directions_car</span></button>
-                <button class="category-button" data-category="Entertainment"><span class="material-icons">movie</span></button>
-                <button class="category-button" data-category="Utilities"><span class="material-icons">bolt</span></button>
-                <button class="category-button" data-category="Other"><span class="material-icons">label</span></button>
+                <button class="category-button" data-category="Food"><span class="material-icons">restaurant</span> Food</button>
+                <button class="category-button" data-category="Transport"><span class="material-icons">directions_car</span> Transport</button>
+                <button class="category-button" data-category="Entertainment"><span class="material-icons">movie</span> Entertainment</button>
+                <button class="category-button" data-category="Utilities"><span class="material-icons">bolt</span> Utilities</button>
+                <button class="category-button" data-category="Other"><span class="material-icons">label</span> Other</button>
             </div>
             <button id="add-expense">Add Expense</button>
+        </div>
+        <div class="limit-group">
+            <h3>Set Expense Limits</h3>
+            <div class="limit-inputs">
+                <div>
+                    <label for="food-limit">Food Limit:</label>
+                    <input type="number" id="food-limit" placeholder="Set limit for Food">
+                </div>
+                <div>
+                    <label for="transport-limit">Transport Limit:</label>
+                    <input type="number" id="transport-limit" placeholder="Set limit for Transport">
+                </div>
+                <div>
+                    <label for="entertainment-limit">Entertainment Limit:</label>
+                    <input type="number" id="entertainment-limit" placeholder="Set limit for Entertainment">
+                </div>
+                <div>
+                    <label for="utilities-limit">Utilities Limit:</label>
+                    <input type="number" id="utilities-limit" placeholder="Set limit for Utilities">
+                </div>
+                <div>
+                    <label for="other-limit">Other Limit:</label>
+                    <input type="number" id="other-limit" placeholder="Set limit for Other">
+                </div>
+            </div>
         </div>
         <div class="expenses-list" id="expenses-list"></div>
         <div class="total" id="total"></div>

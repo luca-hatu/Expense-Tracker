@@ -94,3 +94,30 @@ button:hover {
     margin-top: 20px;
     font-weight: bold;
 }
+.limit-group {
+    margin-top: 20px;
+    text-align: left;
+}
+
+.limit-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.limit-inputs div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.limit-inputs label {
+    width: 150px;
+}
+
+input[type="number"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
