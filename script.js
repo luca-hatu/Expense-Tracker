@@ -1,8 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     let expenses = [];
-    let incomes = [];
     let selectedCategory = null;
-    let budgets = {};
     const limits = {
         'Food': 0,
         'Transport': 0,
@@ -20,27 +18,13 @@ document.addEventListener('DOMContentLoaded', () => {
         'INR': '₹'
     };
 
-    const API_KEY = '7d91d66b1af43e385e105788';
-    const API_URL = `https://v6.exchangerate-api.com/v6/${API_KEY}/latest/USD`;
-
     flatpickr("#date", { dateFormat: "d/m/Y" });
     flatpickr("#income-date", { dateFormat: "d/m/Y" });
 
-    async function fetchConversionRates() {
-        try {
-            const response = await fetch(API_URL);
-            const data = await response.json();
-            conversionRates = data.conversion_rates;
-            console.log('Conversion rates:', conversionRates);
-        } catch (error) {
-            console.error('Error fetching conversion rates:', error);
-        }
-    }
+    const ctxCategory = document.getElementById('category-chart').getContext('2d');
+    const ctxMonthly = document.getElementById('monthly-expenses-chart').getContext('2d');
 
-    fetchConversionRates();
-
-    const ctx = document.getElementById('category-chart').getContext('2d');
-    const categoryChart = new Chart(ctx, {
+    const categoryChart = new Chart(ctxCategory, {
         type: 'pie',
         data: {
             labels: [],
@@ -72,6 +56,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    const monthlyExpensesChart = new Chart(ctxMonthly, {
+        type: 'line',
+        data: {
+            labels: [
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'
+            ],
+            datasets: [{
+                label: 'Monthly Expenses',
+                data: Array(12).fill(0), 
+                backgroundColor: '#FF6384',
+                borderColor: '#FF6384',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: `Amount (${selectedCurrency})`
+                    },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
     function setCategory(category) {
         selectedCategory = category;
 
@@ -79,7 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
         buttons.forEach(button => button.classList.remove('active'));
 
         const selectedButton = document.querySelector(`.category-button[data-category="${category}"]`);
-        selectedButton.classList.add('active');
+        if (selectedButton) {
+            selectedButton.classList.add('active');
+        }
     }
 
     function addExpense() {
@@ -97,26 +118,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const expense = { description, amount, category: selectedCategory, date, isRecurring, interval };
         expenses.push(expense);
         updateExpenses();
-        updateBalance(); 
-        updateBudgetProgress(); 
+        updateBalance();
+        updateBudgetProgress();
         resetForm();
-    }
-
-    function addIncome() {
-        const description = document.getElementById('income-description').value;
-        const amount = parseFloat(document.getElementById('income-amount').value);
-        const date = document.getElementById('income-date').value;
-
-        if (description === '' || isNaN(amount) || date === '') {
-            alert('Please enter a valid description, amount, and date.');
-            return;
-        }
-
-        const income = { description, amount, date };
-        incomes.push(income);
-        updateExpenses(); 
-        updateBalance(); 
-        resetIncomeForm();
     }
 
     function updateExpenses() {
@@ -127,6 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let totalExpenses = 0;
 
         const categoryTotals = {};
+        const monthlyTotals = Array(12).fill(0); 
 
         expenses.forEach((expense, index) => {
             const futureExpenses = expense.isRecurring ? calculateRecurringExpenses(expense) : [expense];
@@ -159,13 +164,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     categoryTotals[fe.category] = convertedAmount;
                 }
+
+                const expenseDate = new Date(fe.date);
+                const monthIndex = expenseDate.getMonth();
+                monthlyTotals[monthIndex] += convertedAmount;
             });
         });
 
         totalElement.textContent = `Total expenses: ${currencySymbols[selectedCurrency]}${totalExpenses.toFixed(2)} (${selectedCurrency})`;
 
         updateChart(categoryTotals);
-        attachButtonEventListeners();
+        updateMonthlyExpensesChart(monthlyTotals);
     }
 
     function calculateRecurringExpenses(expense) {
@@ -219,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateBalance() {
-        const totalIncome = incomes.reduce((acc, income) => acc + income.amount, 0);
+        const totalIncome = 0; 
         const totalExpenses = expenses.reduce((acc, expense) => acc + convertCurrency(expense.amount, 'USD', selectedCurrency), 0);
         const balance = totalIncome - totalExpenses;
         document.getElementById('balance').textContent = `Balance: ${currencySymbols[selectedCurrency]}${balance.toFixed(2)} (${selectedCurrency})`;
@@ -256,6 +265,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function updateChart(categoryTotals) {
+        categoryChart.data.labels = Object.keys(categoryTotals);
+        categoryChart.data.datasets[0].data = Object.values(categoryTotals);
+        categoryChart.update();
+    }
+
+    function updateMonthlyExpensesChart(monthlyTotals) {
+        monthlyExpensesChart.data.datasets[0].data = monthlyTotals;
+        monthlyExpensesChart.update();
+    }
+
     function resetForm() {
         document.getElementById('description').value = '';
         document.getElementById('amount').value = '';
@@ -266,26 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedCategory = null;
     }
 
-    function resetIncomeForm() {
-        document.getElementById('income-description').value = '';
-        document.getElementById('income-amount').value = '';
-        document.getElementById('income-date').value = '';
-    }
-
     document.getElementById('add-expense').addEventListener('click', addExpense);
-    document.getElementById('add-income').addEventListener('click', addIncome);
-
-    document.getElementById('set-budget').addEventListener('click', () => {
-        const category = document.getElementById('budget-category').value;
-        const amount = parseFloat(document.getElementById('budget-amount').value);
-        if (amount > 0) {
-            limits[category] = amount;
-            updateBudgetProgress();
-            document.getElementById('budget-form').reset();
-        } else {
-            alert('Please enter a valid amount.');
-        }
-    });
 
     const categoryButtons = document.querySelectorAll('.category-button');
     categoryButtons.forEach(button => {
@@ -298,3 +299,4 @@ document.addEventListener('DOMContentLoaded', () => {
     updateBalance();
     updateBudgetProgress();
 });
+
