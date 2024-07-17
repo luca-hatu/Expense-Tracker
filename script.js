@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let expenses = [];
     let incomes = [];
     let selectedCategory = null;
+    let budgets = {};
     const limits = {
         'Food': 0,
         'Transport': 0,
@@ -97,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
         expenses.push(expense);
         updateExpenses();
         updateBalance(); 
+        updateBudgetProgress(); 
         resetForm();
     }
 
@@ -203,60 +205,17 @@ document.addEventListener('DOMContentLoaded', () => {
             'Food': '<i class="fas fa-utensils"></i>',
             'Transport': '<i class="fas fa-car"></i>',
             'Entertainment': '<i class="fas fa-film"></i>',
-            'Utilities': '<i class="fas fa-bolt"></i>',
-            'Other': '<i class="fas fa-ellipsis-h"></i>'
+            'Utilities': '<i class="fas fa-plug"></i>',
+            'Other': '<i class="fas fa-box"></i>'
         };
-        return icons[category] || '<i class="fas fa-ellipsis-h"></i>';
+        return icons[category] || '<i class="fas fa-question"></i>';
     }
 
     function convertCurrency(amount, fromCurrency, toCurrency) {
-        if (fromCurrency === toCurrency) {
-            return amount;
-        }
-        const rate = conversionRates[toCurrency] || 1;
-        return amount * rate;
-    }
+        if (fromCurrency === toCurrency) return amount;
 
-    function editExpense(index) {
-        const expense = expenses[index];
-        document.getElementById('description').value = expense.description;
-        document.getElementById('amount').value = expense.amount;
-        document.getElementById('date').value = expense.date;
-        document.getElementById('recurring').checked = expense.isRecurring;
-        document.getElementById('recurring-interval').value = expense.interval;
-        document.getElementById('recurring-interval').disabled = !expense.isRecurring;
-        setCategory(expense.category);
-        removeExpense(index);
-    }
-
-    function removeExpense(index) {
-        expenses.splice(index, 1);
-        updateExpenses();
-        updateBalance(); 
-    }
-
-    function attachButtonEventListeners() {
-        const deleteButtons = document.querySelectorAll('.delete-button');
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', (event) => {
-                const index = event.currentTarget.getAttribute('data-index');
-                removeExpense(index);
-            });
-        });
-
-        const editButtons = document.querySelectorAll('.edit-button');
-        editButtons.forEach(button => {
-            button.addEventListener('click', (event) => {
-                const index = event.currentTarget.getAttribute('data-index');
-                editExpense(index);
-            });
-        });
-    }
-
-    function updateChart(categoryTotals) {
-        categoryChart.data.labels = Object.keys(categoryTotals);
-        categoryChart.data.datasets[0].data = Object.values(categoryTotals);
-        categoryChart.update();
+        const conversionRate = conversionRates[toCurrency];
+        return amount * conversionRate;
     }
 
     function updateBalance() {
@@ -264,6 +223,37 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalExpenses = expenses.reduce((acc, expense) => acc + convertCurrency(expense.amount, 'USD', selectedCurrency), 0);
         const balance = totalIncome - totalExpenses;
         document.getElementById('balance').textContent = `Balance: ${currencySymbols[selectedCurrency]}${balance.toFixed(2)} (${selectedCurrency})`;
+    }
+
+    function updateBudgetProgress() {
+        const budgetProgressDetails = document.getElementById('budget-progress-details');
+        budgetProgressDetails.innerHTML = '';
+        
+        Object.keys(limits).forEach(category => {
+            const totalSpent = expenses
+                .filter(expense => expense.category === category)
+                .reduce((acc, expense) => acc + convertCurrency(expense.amount, 'USD', selectedCurrency), 0);
+
+            const budgetAmount = limits[category];
+            const remainingBudget = budgetAmount - totalSpent;
+            const progressPercentage = (totalSpent / budgetAmount) * 100;
+
+            const progressElement = document.createElement('div');
+            progressElement.className = 'budget-progress-item';
+            progressElement.innerHTML = `
+                <div class="budget-category">${category}</div>
+                <div class="budget-info">
+                    <div class="budget-amount">${currencySymbols[selectedCurrency]}${budgetAmount.toFixed(2)}</div>
+                    <div class="spent-amount">${currencySymbols[selectedCurrency]}${totalSpent.toFixed(2)}</div>
+                    <div class="remaining-amount">${currencySymbols[selectedCurrency]}${remainingBudget.toFixed(2)}</div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-bar-fill" style="width: ${progressPercentage.toFixed(2)}%;"></div>
+                </div>
+                <div class="progress-percentage">${progressPercentage.toFixed(2)}% spent</div>
+            `;
+            budgetProgressDetails.appendChild(progressElement);
+        });
     }
 
     function resetForm() {
@@ -285,6 +275,18 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('add-expense').addEventListener('click', addExpense);
     document.getElementById('add-income').addEventListener('click', addIncome);
 
+    document.getElementById('set-budget').addEventListener('click', () => {
+        const category = document.getElementById('budget-category').value;
+        const amount = parseFloat(document.getElementById('budget-amount').value);
+        if (amount > 0) {
+            limits[category] = amount;
+            updateBudgetProgress();
+            document.getElementById('budget-form').reset();
+        } else {
+            alert('Please enter a valid amount.');
+        }
+    });
+
     const categoryButtons = document.querySelectorAll('.category-button');
     categoryButtons.forEach(button => {
         button.addEventListener('click', (event) => {
@@ -294,4 +296,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     updateBalance();
+    updateBudgetProgress();
 });

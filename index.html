@@ -46,8 +46,32 @@
     <input type="text" id="income-date" placeholder="Select Date">
     <button id="add-income">Add Income</button>
 </div>
+<div id="budget-section">
+    <h2>Set Monthly Budgets</h2>
+    <form id="budget-form">
+        <div class="budget-input">
+            <label for="budget-category">Category:</label>
+            <select id="budget-category">
+                <option value="Food">Food</option>
+                <option value="Transport">Transport</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Utilities">Utilities</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+        <div class="budget-input">
+            <label for="budget-amount">Amount:</label>
+            <input type="number" id="budget-amount" step="0.01">
+        </div>
+        <button type="button" id="set-budget">Set Budget</button>
+    </form>
+</div>
 
-            <h3>Set Expense Limits</h3>
+<div id="budget-progress">
+    <h2>Budget Progress</h2>
+    <div id="budget-progress-details"></div>
+</div>
+<h3>Set Expense Limits</h3>
             <div class="limit-inputs">
                 <div>
                     <label for="food-limit">Food Limit:</label>
