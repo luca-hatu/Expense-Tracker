@@ -4,6 +4,39 @@ document.addEventListener('DOMContentLoaded', () => {
     
     flatpickr("#date", { dateFormat: "d/m/Y" });
 
+    const ctx = document.getElementById('category-chart').getContext('2d');
+    const categoryChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: [],
+            datasets: [{
+                data: [],
+                backgroundColor: [
+                    '#FF6384',
+                    '#36A2EB',
+                    '#FFCE56',
+                    '#4BC0C0',
+                    '#E6E6E6'
+                ],
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(tooltipItem) {
+                            return `${tooltipItem.label}: $${tooltipItem.raw.toFixed(2)}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
     function setCategory(category) {
         selectedCategory = category;
 
@@ -36,6 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
         expensesList.innerHTML = '';
         let total = 0;
 
+        const categoryTotals = {};
+
         expenses.forEach((expense, index) => {
             const expenseElement = document.createElement('div');
             expenseElement.className = 'expense-item';
@@ -50,14 +85,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     $${expense.amount.toFixed(2)}
                 </div>
                 <div class="action-buttons">
-                    <button class="action-button" onclick="editExpense(${index})"><span class="material-icons">edit</span></button>
-                    <button class="action-button" onclick="removeExpense(${index})"><span class="material-icons">delete</span></button>
+                    <button class="action-button edit-button" data-index="${index}"><span class="material-icons">edit</span></button>
+                    <button class="action-button delete-button" data-index="${index}"><span class="material-icons">delete</span></button>
                 </div>`;
             expensesList.appendChild(expenseElement);
             total += expense.amount;
+
+            if (categoryTotals[expense.category]) {
+                categoryTotals[expense.category] += expense.amount;
+            } else {
+                categoryTotals[expense.category] = expense.amount;
+            }
         });
 
         totalElement.textContent = `Total expenses: $${total.toFixed(2)}`;
+
+        updateChart(categoryTotals);
+        attachButtonEventListeners(); 
+    }
+
+    function updateChart(categoryTotals) {
+        const labels = Object.keys(categoryTotals);
+        const data = Object.values(categoryTotals);
+
+        categoryChart.data.labels = labels;
+        categoryChart.data.datasets[0].data = data;
+        categoryChart.update();
     }
 
     function getCategoryIcon(category) {
@@ -92,6 +145,22 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedCategory = null;
         const buttons = document.querySelectorAll('.category-button');
         buttons.forEach(button => button.classList.remove('active'));
+    }
+
+    function attachButtonEventListeners() {
+        document.querySelectorAll('.edit-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const index = button.getAttribute('data-index');
+                editExpense(index);
+            });
+        });
+
+        document.querySelectorAll('.delete-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const index = button.getAttribute('data-index');
+                removeExpense(index);
+            });
+        });
     }
 
     document.getElementById('add-expense').addEventListener('click', addExpense);
