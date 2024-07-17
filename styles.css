@@ -132,10 +132,13 @@ input[type="number"] {
     width: 100%;
     box-sizing: border-box;
 }
-.form-group {
-    margin-bottom: 10px;
-}
-
-#recurring-interval {
-    margin-left: 10px;
+.balance-header {
+    font-size: 2em; 
+    font-weight: bold;
+    text-align: center;
+    padding: 20px;
+    color: #333;
+    background-color: #f5f5f5; 
+    border-bottom: 2px solid #ddd; 
+    margin-bottom: 20px;
 }

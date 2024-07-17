@@ -11,7 +11,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Expense Tracker</h1>
+        <div class="balance-header" id="balance">Balance: ${currencySymbols[selectedCurrency]}0.00 (${selectedCurrency})</div>
         <div class="form-group">
             <input type="text" id="description" placeholder="Expense Description">
             <input type="number" id="amount" placeholder="Amount">
@@ -39,6 +39,14 @@
         <div class="total" id="total"></div>
         <canvas id="category-chart" width="400" height="200"></canvas>     
         <div class="limit-group">
+<div class="form-group">
+    <h3>Add Income</h3>
+    <input type="text" id="income-description" placeholder="Income Description">
+    <input type="number" id="income-amount" placeholder="Amount">
+    <input type="text" id="income-date" placeholder="Select Date">
+    <button id="add-income">Add Income</button>
+</div>
+
             <h3>Set Expense Limits</h3>
             <div class="limit-inputs">
                 <div>

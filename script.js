@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     let expenses = [];
+    let incomes = [];
     let selectedCategory = null;
     const limits = {
         'Food': 0,
@@ -18,10 +19,11 @@ document.addEventListener('DOMContentLoaded', () => {
         'INR': '₹'
     };
 
-    const API_KEY = '7d91d66b1af43e385e105788'
+    const API_KEY = '7d91d66b1af43e385e105788';
     const API_URL = `https://v6.exchangerate-api.com/v6/${API_KEY}/latest/USD`;
 
     flatpickr("#date", { dateFormat: "d/m/Y" });
+    flatpickr("#income-date", { dateFormat: "d/m/Y" });
 
     async function fetchConversionRates() {
         try {
@@ -94,7 +96,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const expense = { description, amount, category: selectedCategory, date, isRecurring, interval };
         expenses.push(expense);
         updateExpenses();
+        updateBalance(); 
         resetForm();
+    }
+
+    function addIncome() {
+        const description = document.getElementById('income-description').value;
+        const amount = parseFloat(document.getElementById('income-amount').value);
+        const date = document.getElementById('income-date').value;
+
+        if (description === '' || isNaN(amount) || date === '') {
+            alert('Please enter a valid description, amount, and date.');
+            return;
+        }
+
+        const income = { description, amount, date };
+        incomes.push(income);
+        updateExpenses(); 
+        updateBalance(); 
+        resetIncomeForm();
     }
 
     function updateExpenses() {
@@ -102,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalElement = document.getElementById('total');
 
         expensesList.innerHTML = '';
-        let total = 0;
+        let totalExpenses = 0;
 
         const categoryTotals = {};
 
@@ -130,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     ${limitExceeded ? '<div class="limit-warning">Limit exceeded!</div>' : ''}`;
                 expensesList.appendChild(expenseElement);
-                total += convertedAmount;
+                totalExpenses += convertedAmount;
 
                 if (categoryTotals[fe.category]) {
                     categoryTotals[fe.category] += convertedAmount;
@@ -140,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        totalElement.textContent = `Total expenses: ${currencySymbols[selectedCurrency]}${total.toFixed(2)} (${selectedCurrency})`;
+        totalElement.textContent = `Total expenses: ${currencySymbols[selectedCurrency]}${totalExpenses.toFixed(2)} (${selectedCurrency})`;
 
         updateChart(categoryTotals);
         attachButtonEventListeners();
@@ -212,6 +232,38 @@ document.addEventListener('DOMContentLoaded', () => {
     function removeExpense(index) {
         expenses.splice(index, 1);
         updateExpenses();
+        updateBalance(); 
+    }
+
+    function attachButtonEventListeners() {
+        const deleteButtons = document.querySelectorAll('.delete-button');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                const index = event.currentTarget.getAttribute('data-index');
+                removeExpense(index);
+            });
+        });
+
+        const editButtons = document.querySelectorAll('.edit-button');
+        editButtons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                const index = event.currentTarget.getAttribute('data-index');
+                editExpense(index);
+            });
+        });
+    }
+
+    function updateChart(categoryTotals) {
+        categoryChart.data.labels = Object.keys(categoryTotals);
+        categoryChart.data.datasets[0].data = Object.values(categoryTotals);
+        categoryChart.update();
+    }
+
+    function updateBalance() {
+        const totalIncome = incomes.reduce((acc, income) => acc + income.amount, 0);
+        const totalExpenses = expenses.reduce((acc, expense) => acc + convertCurrency(expense.amount, 'USD', selectedCurrency), 0);
+        const balance = totalIncome - totalExpenses;
+        document.getElementById('balance').textContent = `Balance: ${currencySymbols[selectedCurrency]}${balance.toFixed(2)} (${selectedCurrency})`;
     }
 
     function resetForm() {
@@ -219,47 +271,27 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('amount').value = '';
         document.getElementById('date').value = '';
         document.getElementById('recurring').checked = false;
-        document.getElementById('recurring-interval').value = 'monthly';
+        document.getElementById('recurring-interval').value = 'daily';
         document.getElementById('recurring-interval').disabled = true;
         selectedCategory = null;
-
-        const buttons = document.querySelectorAll('.category-button');
-        buttons.forEach(button => button.classList.remove('active'));
     }
 
-    function attachButtonEventListeners() {
-        const editButtons = document.querySelectorAll('.edit-button');
-        editButtons.forEach(button => {
-            button.addEventListener('click', (event) => {
-                const index = parseInt(event.target.closest('button').dataset.index);
-                editExpense(index);
-            });
-        });
-
-        const deleteButtons = document.querySelectorAll('.delete-button');
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', (event) => {
-                const index = parseInt(event.target.closest('button').dataset.index);
-                removeExpense(index);
-            });
-        });
-    }
-
-    function updateChart(categoryTotals) {
-        const categories = Object.keys(categoryTotals);
-        const amounts = categories.map(category => categoryTotals[category]);
-
-        categoryChart.data.labels = categories;
-        categoryChart.data.datasets[0].data = amounts;
-        categoryChart.update();
+    function resetIncomeForm() {
+        document.getElementById('income-description').value = '';
+        document.getElementById('income-amount').value = '';
+        document.getElementById('income-date').value = '';
     }
 
     document.getElementById('add-expense').addEventListener('click', addExpense);
+    document.getElementById('add-income').addEventListener('click', addIncome);
 
     const categoryButtons = document.querySelectorAll('.category-button');
     categoryButtons.forEach(button => {
         button.addEventListener('click', (event) => {
-            setCategory(event.target.dataset.category);
+            const category = event.currentTarget.getAttribute('data-category');
+            setCategory(category);
         });
     });
+
+    updateBalance();
 });
